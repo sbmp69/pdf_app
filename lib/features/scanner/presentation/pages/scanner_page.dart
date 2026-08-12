@@ -129,7 +129,26 @@ class _ScannerPageState extends State<ScannerPage> {
                   itemBuilder: (context, index) {
                     return Card(
                       margin: const EdgeInsets.all(8),
-                      child: Image.file(File(_pictures[index])),
+                      child: Stack(
+                        alignment: Alignment.topRight,
+                        children: [
+                          Image.file(File(_pictures[index])),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: CircleAvatar(
+                              backgroundColor: Colors.black54,
+                              child: IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.white),
+                                onPressed: () {
+                                  setState(() {
+                                    _pictures.removeAt(index);
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),
