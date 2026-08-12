@@ -4,6 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
+import 'package:image/image.dart' as img;
+import 'package:pdf/pdf.dart' as p;
+import 'package:pdf/widgets.dart' as pw;
 import '../widgets/quick_tools_grid.dart';
 import '../../../documents/presentation/pages/documents_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
@@ -190,28 +194,75 @@ class _HomePageState extends State<HomePage> {
   Future<void> _compressPdf() async {
     FilePickerResult? result = await FilePicker.pickFiles(type: FileType.custom, allowedExtensions: ['pdf']);
     if (result != null && result.files.single.path != null) {
+      TextEditingController nameController = TextEditingController(text: 'Compressed_${DateTime.now().millisecondsSinceEpoch}');
+      final String? customName = await showDialog<String>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Save Compressed PDF'),
+            content: TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Document Name', suffixText: '.pdf'),
+              autofocus: true,
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: () {
+                  if (nameController.text.trim().isEmpty) return;
+                  Navigator.pop(context, nameController.text.trim());
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        }
+      );
+
+      if (customName == null) return;
+
       setState(() => _isLoading = true);
       try {
-        final bytes = await File(result.files.single.path!).readAsBytes();
-        final doc = PdfDocument(inputBytes: bytes);
+        final pdfBytes = await File(result.files.single.path!).readAsBytes();
         
-        doc.compressionLevel = PdfCompressionLevel.best;
+        final compressedPdf = pw.Document();
         
-        final List<int> savedBytes = doc.saveSync();
-        doc.dispose();
+        // Rasterize PDF pages to images at 72 DPI to save space
+        await for (var page in Printing.raster(pdfBytes, dpi: 72)) {
+          final pngBytes = await page.toPng();
+          
+          // Decode PNG and encode as highly compressed JPEG
+          final image = img.decodeImage(pngBytes);
+          if (image != null) {
+            final jpegBytes = img.encodeJpg(image, quality: 60);
+            
+            final pwImage = pw.MemoryImage(jpegBytes);
+            compressedPdf.addPage(
+              pw.Page(
+                pageFormat: p.PdfPageFormat(page.width.toDouble(), page.height.toDouble()),
+                margin: pw.EdgeInsets.zero,
+                build: (pw.Context context) {
+                  return pw.Center(
+                    child: pw.Image(pwImage, fit: pw.BoxFit.contain),
+                  );
+                },
+              ),
+            );
+          }
+        }
 
         final directory = await getApplicationDocumentsDirectory();
-        final path = '${directory.path}/compressed_${DateTime.now().millisecondsSinceEpoch}.pdf';
-        await File(path).writeAsBytes(savedBytes);
+        final path = '${directory.path}/$customName.pdf';
+        await File(path).writeAsBytes(await compressedPdf.save());
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Compressed PDF saved to: $path')));
-          setState(() => _selectedIndex = 1);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Compressed PDF saved! Check Documents tab.')));
+          setState(() => _isLoading = false);
         }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error compressing: $e')));
+        setState(() => _isLoading = false);
       }
-      setState(() => _isLoading = false);
     }
   }
 
