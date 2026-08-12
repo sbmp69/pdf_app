@@ -56,7 +56,11 @@ class _SettingsPageState extends State<SettingsPage> {
             leading: const Icon(Icons.star, color: Colors.amber),
             title: const Text('Upgrade to ScanPro Premium'),
             subtitle: const Text('Unlock all features & remove ads'),
-            onTap: () {},
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('In-app purchases are coming in v2.0!')),
+              );
+            },
           ),
           const Divider(),
           _buildSectionHeader(context, 'GENERAL'),
@@ -65,7 +69,11 @@ class _SettingsPageState extends State<SettingsPage> {
             title: const Text('Cloud Backup'),
             subtitle: const Text('Not connected'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Cloud Backup is a Premium feature coming in v2.0')),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.security),
@@ -82,14 +90,26 @@ class _SettingsPageState extends State<SettingsPage> {
             title: const Text('Default Scan Quality'),
             subtitle: const Text('High'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Quality is automatically optimized in this version.')),
+              );
+            },
           ),
           ListTile(
             leading: const Icon(Icons.camera),
             title: const Text('Auto-save to Gallery'),
             trailing: Switch(
               value: _autoSaveGallery,
-              onChanged: _toggleAutoSave,
+              onChanged: (value) {
+                _toggleAutoSave(value);
+                if (value) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Auto-save to Gallery is a Premium feature coming in v2.0')),
+                  );
+                  Future.delayed(const Duration(milliseconds: 300), () => _toggleAutoSave(false));
+                }
+              },
             ),
           ),
           const Divider(),
@@ -103,7 +123,11 @@ class _SettingsPageState extends State<SettingsPage> {
             leading: const Icon(Icons.help),
             title: const Text('Help & Support'),
             trailing: const Icon(Icons.chevron_right),
-            onTap: () {},
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Support center is coming in v2.0!')),
+              );
+            },
           ),
         ],
       ),

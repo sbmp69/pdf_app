@@ -1,7 +1,55 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
+import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
-class DocumentsPage extends StatelessWidget {
+class DocumentsPage extends StatefulWidget {
   const DocumentsPage({super.key});
+
+  @override
+  State<DocumentsPage> createState() => _DocumentsPageState();
+}
+
+class _DocumentsPageState extends State<DocumentsPage> {
+  List<FileSystemEntity> _pdfFiles = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDocuments();
+  }
+
+  Future<void> _loadDocuments() async {
+    setState(() => _isLoading = true);
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final List<FileSystemEntity> files = directory.listSync().where((file) {
+        return file.path.toLowerCase().endsWith('.pdf');
+      }).toList();
+      
+      // Sort by modified date descending (newest first)
+      files.sort((a, b) {
+        return File(b.path).lastModifiedSync().compareTo(File(a.path).lastModifiedSync());
+      });
+
+      setState(() {
+        _pdfFiles = files;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes <= 0) return "0 B";
+    const suffixes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+    var i = (bytes > 0) ? (bytes.toString().length - 1) ~/ 3 : 0;
+    return "${(bytes / (1 << (i * 10))).toStringAsFixed(1)} ${suffixes[i]}";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -10,19 +58,45 @@ class DocumentsPage extends StatelessWidget {
         title: const Text('My Documents'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.sort),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: const Icon(Icons.grid_view),
-            onPressed: () {},
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadDocuments,
           ),
         ],
       ),
-      body: _buildEmptyState(context),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _pdfFiles.isEmpty
+              ? _buildEmptyState(context)
+              : RefreshIndicator(
+                  onRefresh: _loadDocuments,
+                  child: ListView.builder(
+                    itemCount: _pdfFiles.length,
+                    itemBuilder: (context, index) {
+                      final file = File(_pdfFiles[index].path);
+                      final fileName = file.path.split('/').last.split('\\').last;
+                      final fileSize = _formatBytes(file.lengthSync());
+                      final lastModified = file.lastModifiedSync();
+                      
+                      return ListTile(
+                        leading: const Icon(Icons.picture_as_pdf, color: Colors.red, size: 40),
+                        title: Text(fileName, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        subtitle: Text('$fileSize • ${lastModified.day}/${lastModified.month}/${lastModified.year}'),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.share),
+                          onPressed: () {
+                            Share.shareXFiles([XFile(file.path)], text: 'Check out this PDF document.');
+                          },
+                        ),
+                        onTap: () {
+                          OpenFile.open(file.path);
+                        },
+                      );
+                    },
+                  ),
+                ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
-        child: const Icon(Icons.create_new_folder),
+        onPressed: () => context.push('/scanner').then((_) => _loadDocuments()),
+        child: const Icon(Icons.document_scanner),
       ),
     );
   }
@@ -46,7 +120,7 @@ class DocumentsPage extends StatelessWidget {
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () {},
+            onPressed: () => context.push('/scanner').then((_) => _loadDocuments()),
             icon: const Icon(Icons.document_scanner),
             label: const Text('Scan Document'),
           ),

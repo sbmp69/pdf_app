@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/pdf_generator.dart';
 import '../../../../core/utils/ocr_scanner.dart';
@@ -18,28 +19,84 @@ class _ScannerPageState extends State<ScannerPage> {
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _startScan() async {
+    final ImageSource? source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a Photo'),
+                onTap: () => Navigator.pop(context, ImageSource.camera),
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from Gallery'),
+                onTap: () => Navigator.pop(context, ImageSource.gallery),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+
+    if (source == null) return; // User canceled
+
     setState(() => _isScanning = true);
     try {
-      final List<XFile> images = await _picker.pickMultiImage();
-      
-      if (images.isEmpty) {
-        // Fallback to taking a single picture if user wants to use camera
+      List<XFile> images = [];
+      if (source == ImageSource.camera) {
         final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
         if (photo != null) {
           images.add(photo);
+        }
+      } else {
+        images = List.from(await _picker.pickMultiImage());
+      }
+
+      if (images.isEmpty) {
+        if (!mounted) return;
+        setState(() => _isScanning = false);
+        return;
+      }
+
+      if (!mounted) return;
+      
+      // Crop each selected image
+      List<String> croppedPaths = [];
+      for (var img in images) {
+        final CroppedFile? croppedFile = await ImageCropper().cropImage(
+          sourcePath: img.path,
+          uiSettings: [
+            AndroidUiSettings(
+              toolbarTitle: 'Crop Document',
+              toolbarColor: Theme.of(context).colorScheme.primary,
+              toolbarWidgetColor: Colors.white,
+              initAspectRatio: CropAspectRatioPreset.original,
+              lockAspectRatio: false,
+            ),
+            IOSUiSettings(
+              title: 'Crop Document',
+            ),
+          ],
+        );
+        if (croppedFile != null) {
+          croppedPaths.add(croppedFile.path);
         }
       }
 
       if (!mounted) return;
       setState(() {
-        _pictures.addAll(images.map((e) => e.path));
+        _pictures.addAll(croppedPaths);
         _isScanning = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() => _isScanning = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to get pictures: $e')),
+        SnackBar(content: Text('Failed to get or crop pictures: $e')),
       );
     }
   }
@@ -120,16 +177,52 @@ class _ScannerPageState extends State<ScannerPage> {
             FloatingActionButton.extended(
               heroTag: 'save_pdf',
               onPressed: () async {
+                TextEditingController nameController = TextEditingController(text: 'Scan_${DateTime.now().millisecondsSinceEpoch}');
+                
+                final String? customName = await showDialog<String>(
+                  context: context,
+                  builder: (context) {
+                    return AlertDialog(
+                      title: const Text('Save PDF'),
+                      content: TextField(
+                        controller: nameController,
+                        decoration: const InputDecoration(
+                          labelText: 'Document Name',
+                          suffixText: '.pdf',
+                        ),
+                        autofocus: true,
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () {
+                            if (nameController.text.trim().isEmpty) return;
+                            Navigator.pop(context, nameController.text.trim());
+                          },
+                          child: const Text('Save'),
+                        ),
+                      ],
+                    );
+                  }
+                );
+
+                if (customName == null) return; // User canceled
+
                 setState(() => _isScanning = true);
                 try {
-                  // We need to import the generator first, so let's assume it's imported above
-                  // Actually, I'll add the import in the next call.
-                  final file = await PdfGenerator.generatePdfFromImages(_pictures, 'Scan_${DateTime.now().millisecondsSinceEpoch}');
+                  final file = await PdfGenerator.generatePdfFromImages(_pictures, customName);
                   if (!mounted) return;
-                  setState(() => _isScanning = false);
+                  setState(() {
+                    _isScanning = false;
+                    _pictures.clear();
+                  });
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Saved to: ${file.path}')),
+                    SnackBar(content: Text('Saved successfully! Check Documents tab.')),
                   );
+                  context.pop();
                 } catch (e) {
                   if (!mounted) return;
                   setState(() => _isScanning = false);

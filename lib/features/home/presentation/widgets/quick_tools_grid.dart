@@ -2,30 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class QuickToolsGrid extends StatelessWidget {
-  const QuickToolsGrid({super.key});
+  final Function(String) onToolSelected;
+
+  const QuickToolsGrid({super.key, required this.onToolSelected});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle(context, 'SCAN'),
+        _buildSectionTitle(context, 'PDF TOOLS'),
         const SizedBox(height: 12),
         _buildGrid(context, [
-          _ToolItem('Camera Scanner', Icons.document_scanner),
-          _ToolItem('Batch Scanner', Icons.file_copy),
-          _ToolItem('ID Card', Icons.badge),
-          _ToolItem('Passport', Icons.book_online),
-          _ToolItem('Receipt', Icons.receipt_long),
-          _ToolItem('Business Card', Icons.contact_mail),
-        ]),
-        const SizedBox(height: 24),
-        _buildSectionTitle(context, 'CREATE'),
-        const SizedBox(height: 12),
-        _buildGrid(context, [
-          _ToolItem('Images → PDF', Icons.image),
-          _ToolItem('Text → PDF', Icons.text_snippet),
-          _ToolItem('QR Code', Icons.qr_code),
+          _ToolItem('Merge PDF', Icons.merge_type),
+          _ToolItem('Compress PDF', Icons.compress),
+          _ToolItem('Protect PDF', Icons.lock),
+          _ToolItem('Edit PDF', Icons.edit_document),
         ]),
       ],
     );
@@ -48,23 +40,17 @@ class QuickToolsGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       itemCount: tools.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 3,
+        crossAxisCount: 2,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
-        childAspectRatio: 0.85,
+        childAspectRatio: 1.5,
       ),
       itemBuilder: (context, index) {
         final tool = tools[index];
         return Card(
           child: InkWell(
             borderRadius: BorderRadius.circular(16),
-            onTap: () {
-              if (tool.title == 'QR Code') {
-                context.push('/qr_scanner');
-              } else {
-                context.push('/scanner');
-              }
-            },
+            onTap: () => onToolSelected(tool.title),
             child: Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -77,7 +63,7 @@ class QuickToolsGrid extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w500,
-                          fontSize: 12,
+                          fontSize: 14,
                         ),
                   ),
                 ],
