@@ -44,15 +44,46 @@ class _HomePageState extends State<HomePage> {
     );
 
     if (result != null && result.files.length > 1) {
+      TextEditingController nameController = TextEditingController(text: 'Merged_${DateTime.now().millisecondsSinceEpoch}');
+      final String? customName = await showDialog<String>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Save Merged PDF'),
+            content: TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Document Name', suffixText: '.pdf'),
+              autofocus: true,
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+              FilledButton(
+                onPressed: () {
+                  if (nameController.text.trim().isEmpty) return;
+                  Navigator.pop(context, nameController.text.trim());
+                },
+                child: const Text('Save'),
+              ),
+            ],
+          );
+        }
+      );
+
+      if (customName == null) return;
+
       setState(() => _isLoading = true);
       try {
         final PdfDocument finalDoc = PdfDocument();
+        finalDoc.pageSettings.margins.all = 0; // Remove default margins
+        
         for (var file in result.files) {
           if (file.path != null) {
             final bytes = await File(file.path!).readAsBytes();
             final doc = PdfDocument(inputBytes: bytes);
             for (int i = 0; i < doc.pages.count; i++) {
               final template = doc.pages[i].createTemplate();
+              // Match the original page size exactly
+              finalDoc.pageSettings.size = doc.pages[i].size;
               final page = finalDoc.pages.add();
               page.graphics.drawPdfTemplate(template, const Offset(0, 0));
             }
@@ -64,18 +95,19 @@ class _HomePageState extends State<HomePage> {
         finalDoc.dispose();
 
         final directory = await getApplicationDocumentsDirectory();
-        final path = '${directory.path}/merged_${DateTime.now().millisecondsSinceEpoch}.pdf';
+        final path = '${directory.path}/$customName.pdf';
         await File(path).writeAsBytes(savedBytes);
         
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Merged PDF saved to: $path')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Merged PDF saved! Check Documents tab.')));
+          setState(() => _isLoading = false);
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error merging: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error merging PDFs: $e')));
+          setState(() => _isLoading = false);
         }
       }
-      setState(() => _isLoading = false);
     } else if (result != null && result.files.length <= 1) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please select at least 2 PDFs to merge')));
     }
