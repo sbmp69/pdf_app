@@ -18,7 +18,7 @@ class ScanProApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppLockScreen(
       child: MaterialApp.router(
-        title: 'ScanPro AI',
+        title: 'PDF Master: Scan, Edit & Merge',
         theme: AppTheme.lightTheme,
         routerConfig: AppRouter.router,
         debugShowCheckedModeBanner: false,

@@ -273,7 +273,7 @@ class _HomePageState extends State<HomePage> {
         Scaffold(
           appBar: _selectedIndex == 0
               ? AppBar(
-                  title: const Text('ScanPro AI'),
+                  title: const Text('PDF Master'),
                   actions: [
                     IconButton(icon: const Icon(Icons.search), onPressed: () {}),
                     IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
