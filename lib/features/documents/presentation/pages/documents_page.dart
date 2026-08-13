@@ -134,7 +134,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
                           ],
                         ),
                         onTap: () {
-                          OpenFile.open(file.path);
+                          context.push('/pdf_viewer', extra: file.path);
                         },
                       );
                     },
