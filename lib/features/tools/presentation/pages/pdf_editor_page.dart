@@ -10,6 +10,8 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/pdf_generator.dart';
 import '../widgets/resizable_image_widget.dart';
 
+final ValueNotifier<bool> globalIsExportingNotifier = ValueNotifier<bool>(false);
+
 class PdfEditorPage extends StatefulWidget {
   final String? pdfPath;
   const PdfEditorPage({super.key, this.pdfPath});
@@ -49,7 +51,6 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
   Future<void> _rasterizePdf(String pdfPath) async {
     setState(() => _isLoading = true);
     try {
-      // Handle content URIs from Intents as well as normal file paths
       final bytes = await File(pdfPath).readAsBytes();
       final directory = await getTemporaryDirectory();
       
@@ -180,7 +181,6 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
                               child: Stack(
                                 fit: StackFit.expand,
                                 children: [
-                                  // Add a unique Key to force image reload if path changes
                                   Image.file(File(_pageImages[index]), fit: BoxFit.cover, key: ValueKey('${_pageImages[index]}_${DateTime.now().millisecondsSinceEpoch}')),
                                   Container(
                                     color: Colors.black.withOpacity(0.1),
@@ -219,7 +219,11 @@ class ImagePainterScreen extends StatelessWidget {
     return ProImageEditor.file(
       File(imagePath),
       callbacks: ProImageEditorCallbacks(
+        onImageEditingStarted: () {
+          globalIsExportingNotifier.value = true;
+        },
         onImageEditingComplete: (Uint8List bytes) async {
+          globalIsExportingNotifier.value = false;
           final directory = await getTemporaryDirectory();
           final path = '${directory.path}/edited_${DateTime.now().millisecondsSinceEpoch}.png';
           await File(path).writeAsBytes(bytes);

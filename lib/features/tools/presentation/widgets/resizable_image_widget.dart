@@ -1,6 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
+final ValueNotifier<bool> globalIsExportingNotifier = ValueNotifier(false);
+
+
 class ImageResizeState {
   double width;
   double height;
@@ -72,48 +75,50 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
         ),
       ),
     );
-  }
-
-  @override
+  }  @override
   Widget build(BuildContext context) {
     final state = widget.stateData;
-    final totalWidth = state.isEditing ? state.width + 32 : state.width;
-    final totalHeight = state.isEditing ? state.height + 32 : state.height;
-    final offset = state.isEditing ? 16.0 : 0.0;
+    return ValueListenableBuilder<bool>(
+      valueListenable: globalIsExportingNotifier,
+      builder: (context, isExporting, child) {
+        final showHandles = state.isEditing && !isExporting;
+        final totalWidth = showHandles ? state.width + 32 : state.width;
+        final totalHeight = showHandles ? state.height + 32 : state.height;
+        final offset = showHandles ? 16.0 : 0.0;
 
-    return Listener(
-      onPointerDown: (_) {
-        if (!state.isEditing) {
-          setState(() => state.isEditing = true);
-        }
-      },
-      child: Transform.translate(
-        offset: Offset(state.translateX, state.translateY),
-        child: SizedBox(
-          width: totalWidth,
-          height: totalHeight,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // Image Box
-              Positioned(
-                left: offset,
-                top: offset,
-                width: state.width,
-                height: state.height,
-                child: Container(
-                  decoration: BoxDecoration(
-                    border: state.isEditing ? Border.all(color: Colors.grey.shade700, width: 1.5) : null,
+        return Listener(
+          onPointerDown: (_) {
+            if (!state.isEditing && !isExporting) {
+              setState(() => state.isEditing = true);
+            }
+          },
+          child: Transform.translate(
+            offset: Offset(state.translateX, state.translateY),
+            child: SizedBox(
+              width: totalWidth,
+              height: totalHeight,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  // Image Box
+                  Positioned(
+                    left: offset,
+                    top: offset,
+                    width: state.width,
+                    height: state.height,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: showHandles ? Border.all(color: Colors.grey.shade700, width: 1.5) : null,
+                      ),
+                      child: Image.file(
+                        File(widget.imagePath),
+                        fit: BoxFit.fill,
+                      ),
+                    ),
                   ),
-                  child: Image.file(
-                    File(widget.imagePath),
-                    fit: BoxFit.fill,
-                  ),
-                ),
-              ),
-              
-              // Edge Handles
-              if (state.isEditing) ...[
+                  
+                  // Edge Handles
+                  if (showHandles) ...[
                 // Top Center
                 Positioned(
                   top: 0,
@@ -274,11 +279,13 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                     ),
                   ),
                 ),
-              ]
+              ],
             ],
           ),
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
+
