@@ -27,7 +27,10 @@ class AppRouter {
       GoRoute(
         path: '/pdf_editor',
         name: 'pdf_editor',
-        builder: (context, state) => const PdfEditorPage(),
+        builder: (context, state) {
+          final pdfPath = state.extra as String?;
+          return PdfEditorPage(pdfPath: pdfPath);
+        },
       ),
     ],
   );

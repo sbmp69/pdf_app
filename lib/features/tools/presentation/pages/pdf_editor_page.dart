@@ -1,14 +1,16 @@
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:image_painter/image_painter.dart';
+import 'package:pro_image_editor/pro_image_editor.dart';
 import '../../../../core/utils/pdf_generator.dart';
 
 class PdfEditorPage extends StatefulWidget {
-  const PdfEditorPage({super.key});
+  final String? pdfPath;
+  const PdfEditorPage({super.key, this.pdfPath});
 
   @override
   State<PdfEditorPage> createState() => _PdfEditorPageState();
@@ -22,7 +24,11 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _pickFile();
+      if (widget.pdfPath != null) {
+        _rasterizePdf(widget.pdfPath!);
+      } else {
+        _pickFile();
+      }
     });
   }
 
@@ -41,6 +47,7 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
   Future<void> _rasterizePdf(String pdfPath) async {
     setState(() => _isLoading = true);
     try {
+      // Handle content URIs from Intents as well as normal file paths
       final bytes = await File(pdfPath).readAsBytes();
       final directory = await getTemporaryDirectory();
       
@@ -64,6 +71,7 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error loading PDF: $e')));
+      if (_pageImages.isEmpty) context.pop();
     }
   }
 
@@ -149,7 +157,7 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
                   children: [
                     const Padding(
                       padding: EdgeInsets.all(8.0),
-                      child: Text('Tap on a page to draw, add text, or highlight.', style: TextStyle(color: Colors.grey)),
+                      child: Text('Tap on a page to add stickers, draw, or edit.', style: TextStyle(color: Colors.grey)),
                     ),
                     Expanded(
                       child: GridView.builder(
@@ -200,55 +208,27 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
   }
 }
 
-class ImagePainterScreen extends StatefulWidget {
+class ImagePainterScreen extends StatelessWidget {
   final String imagePath;
   const ImagePainterScreen({super.key, required this.imagePath});
 
   @override
-  State<ImagePainterScreen> createState() => _ImagePainterScreenState();
-}
-
-class _ImagePainterScreenState extends State<ImagePainterScreen> {
-  late ImagePainterController _controller;
-  bool _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = ImagePainterController();
-  }
-
-  Future<void> _saveImage() async {
-    setState(() => _saving = true);
-    try {
-      final imageBytes = await _controller.exportImage();
-      if (imageBytes != null) {
-        final directory = await getTemporaryDirectory();
-        final path = '${directory.path}/edited_${DateTime.now().millisecondsSinceEpoch}.png';
-        await File(path).writeAsBytes(imageBytes);
-        if (mounted) Navigator.pop(context, path);
-      }
-    } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error saving: $e')));
-    }
-    setState(() => _saving = false);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Edit Document'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _saveImage,
-          )
-        ],
+    return ProImageEditor.file(
+      File(imagePath),
+      callbacks: ProImageEditorCallbacks(
+        onImageEditingComplete: (Uint8List bytes) async {
+          final directory = await getTemporaryDirectory();
+          final path = '${directory.path}/edited_${DateTime.now().millisecondsSinceEpoch}.png';
+          await File(path).writeAsBytes(bytes);
+          if (context.mounted) {
+            Navigator.pop(context, path);
+          }
+        },
       ),
-      body: _saving 
-        ? const Center(child: CircularProgressIndicator())
-        : ImagePainter.file(File(widget.imagePath), controller: _controller),
+      configs: const ProImageEditorConfigs(
+        designMode: ImageEditorDesignMode.material,
+      ),
     );
   }
 }
