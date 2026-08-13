@@ -4,6 +4,7 @@ import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/scanner/presentation/pages/scanner_page.dart';
 import '../../features/scanner/presentation/pages/qr_scanner_page.dart';
 import '../../features/tools/presentation/pages/pdf_editor_page.dart';
+import '../../features/tools/presentation/pages/pdf_viewer_page.dart';
 
 class AppRouter {
   static final router = GoRouter(
@@ -23,6 +24,13 @@ class AppRouter {
         path: '/qr_scanner',
         name: 'qr_scanner',
         builder: (context, state) => const QRScannerPage(),
+      ),
+      GoRoute(
+        path: '/pdf_viewer',
+        builder: (context, state) {
+          final pdfPath = state.extra as String;
+          return PdfViewerPage(pdfPath: pdfPath);
+        },
       ),
       GoRoute(
         path: '/pdf_editor',

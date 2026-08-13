@@ -241,33 +241,37 @@ class ImagePainterScreen extends StatelessWidget {
         stickerEditor: StickerEditorConfigs(
           enabled: true,
           builder: (setLayer, scrollController) {
-            return Container(
-              color: Colors.white,
-              child: Center(
-                child: FilledButton.icon(
-                  icon: const Icon(Icons.add_photo_alternate),
-                  label: const Text('Pick Image from Gallery'),
-                  onPressed: () async {
-                    final picker = ImagePicker();
-                    final image = await picker.pickImage(source: ImageSource.gallery);
-                    if (image != null) {
-                      setLayer(
-                        WidgetLayer(
-                          widget: SizedBox(
-                            width: 200,
-                            height: 200,
-                            child: Image.file(File(image.path), fit: BoxFit.contain),
-                          ),
-                          exportConfigs: WidgetLayerExportConfigs(
-                            fileUrl: image.path,
-                          ),
-                        ),
-                      );
-                      if (context.mounted) Navigator.pop(context); // Close bottom sheet
-                    }
-                  },
-                ),
-              ),
+            return Builder(
+              builder: (sheetContext) {
+                return Container(
+                  color: Colors.white,
+                  child: Center(
+                    child: FilledButton.icon(
+                      icon: const Icon(Icons.add_photo_alternate),
+                      label: const Text('Pick Image from Gallery'),
+                      onPressed: () async {
+                        final picker = ImagePicker();
+                        final image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          setLayer(
+                            WidgetLayer(
+                              widget: SizedBox(
+                                width: 200,
+                                height: 200,
+                                child: Image.file(File(image.path), fit: BoxFit.contain),
+                              ),
+                              exportConfigs: WidgetLayerExportConfigs(
+                                fileUrl: image.path,
+                              ),
+                            ),
+                          );
+                          if (sheetContext.mounted) Navigator.pop(sheetContext); // Close bottom sheet
+                        }
+                      },
+                    ),
+                  ),
+                );
+              },
             );
           },
         ),
