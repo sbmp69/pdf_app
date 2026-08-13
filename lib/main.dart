@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:open_file/open_file.dart';
 import 'core/theme/app_theme.dart';
 import 'core/routing/app_router.dart';
 import 'core/database/database_helper.dart';
@@ -11,8 +13,47 @@ void main() async {
   runApp(const ProviderScope(child: ScanProApp()));
 }
 
-class ScanProApp extends StatelessWidget {
+class ScanProApp extends StatefulWidget {
   const ScanProApp({super.key});
+
+  @override
+  State<ScanProApp> createState() => _ScanProAppState();
+}
+
+class _ScanProAppState extends State<ScanProApp> with WidgetsBindingObserver {
+  static const platform = MethodChannel('app.channel.shared.data');
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _getSharedData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _getSharedData();
+    }
+  }
+
+  Future<void> _getSharedData() async {
+    try {
+      final String? sharedData = await platform.invokeMethod('getSharedData');
+      if (sharedData != null && sharedData.isNotEmpty) {
+        // Shared data will be a content URI like content://...
+        OpenFile.open(sharedData);
+      }
+    } on PlatformException catch (e) {
+      debugPrint("Failed to get shared data: '${e.message}'.");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
