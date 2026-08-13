@@ -38,11 +38,29 @@ class MainActivity: FlutterActivity() {
             if ("application/pdf" == type) {
                 val uri = intent.data ?: intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
                 if (uri != null) {
-                    result.success(uri.toString())
-                    return
+                    val filePath = copyUriToCache(uri)
+                    if (filePath != null) {
+                        result.success(filePath)
+                        return
+                    }
                 }
             }
         }
         result.success("")
+    }
+
+    private fun copyUriToCache(uri: Uri): String? {
+        return try {
+            val inputStream = contentResolver.openInputStream(uri) ?: return null
+            val file = java.io.File(cacheDir, "shared_document_${System.currentTimeMillis()}.pdf")
+            val outputStream = java.io.FileOutputStream(file)
+            inputStream.copyTo(outputStream)
+            inputStream.close()
+            outputStream.close()
+            file.absolutePath
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 }
