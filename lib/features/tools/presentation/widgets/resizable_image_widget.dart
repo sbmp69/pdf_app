@@ -1,29 +1,37 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 
+class ImageResizeState {
+  double width;
+  double height;
+  double translateX;
+  double translateY;
+  bool isEditing;
+
+  ImageResizeState({
+    required this.width,
+    required this.height,
+    this.translateX = 0.0,
+    this.translateY = 0.0,
+    this.isEditing = true,
+  });
+}
+
 class ResizableImageWidget extends StatefulWidget {
   final String imagePath;
-  final double initialWidth;
-  final double initialHeight;
+  final ImageResizeState stateData;
 
-  const ResizableImageWidget({
+  ResizableImageWidget({
     super.key,
     required this.imagePath,
-    this.initialWidth = 200,
-    this.initialHeight = 200,
-  });
+    ImageResizeState? stateData,
+  }) : stateData = stateData ?? ImageResizeState(width: 200, height: 200);
 
   @override
   State<ResizableImageWidget> createState() => _ResizableImageWidgetState();
 }
 
 class _ResizableImageWidgetState extends State<ResizableImageWidget> {
-  late double imgWidth;
-  late double imgHeight;
-  double translateX = 0.0;
-  double translateY = 0.0;
-  bool isEditing = true;
-
   // Drag state
   double _startWidth = 0;
   double _startHeight = 0;
@@ -31,18 +39,11 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
   double _startY = 0;
   Offset _startPos = Offset.zero;
 
-  @override
-  void initState() {
-    super.initState();
-    imgWidth = widget.initialWidth;
-    imgHeight = widget.initialHeight;
-  }
-
   void _onPanStart(DragStartDetails details) {
-    _startWidth = imgWidth;
-    _startHeight = imgHeight;
-    _startX = translateX;
-    _startY = translateY;
+    _startWidth = widget.stateData.width;
+    _startHeight = widget.stateData.height;
+    _startX = widget.stateData.translateX;
+    _startY = widget.stateData.translateY;
     _startPos = details.globalPosition;
   }
 
@@ -50,7 +51,7 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
     required void Function(DragStartDetails) onPanStart,
     required void Function(DragUpdateDetails) onPanUpdate,
   }) {
-    if (!isEditing) return const SizedBox();
+    if (!widget.stateData.isEditing) return const SizedBox();
     return GestureDetector(
       onPanStart: onPanStart,
       onPanUpdate: onPanUpdate,
@@ -75,18 +76,19 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final totalWidth = isEditing ? imgWidth + 32 : imgWidth;
-    final totalHeight = isEditing ? imgHeight + 32 : imgHeight;
-    final offset = isEditing ? 16.0 : 0.0;
+    final state = widget.stateData;
+    final totalWidth = state.isEditing ? state.width + 32 : state.width;
+    final totalHeight = state.isEditing ? state.height + 32 : state.height;
+    final offset = state.isEditing ? 16.0 : 0.0;
 
     return Listener(
       onPointerDown: (_) {
-        if (!isEditing) {
-          setState(() => isEditing = true);
+        if (!state.isEditing) {
+          setState(() => state.isEditing = true);
         }
       },
       child: Transform.translate(
-        offset: Offset(translateX, translateY),
+        offset: Offset(state.translateX, state.translateY),
         child: SizedBox(
           width: totalWidth,
           height: totalHeight,
@@ -97,11 +99,11 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
               Positioned(
                 left: offset,
                 top: offset,
-                width: imgWidth,
-                height: imgHeight,
+                width: state.width,
+                height: state.height,
                 child: Container(
                   decoration: BoxDecoration(
-                    border: isEditing ? Border.all(color: Colors.grey.shade700, width: 1.5) : null,
+                    border: state.isEditing ? Border.all(color: Colors.grey.shade700, width: 1.5) : null,
                   ),
                   child: Image.file(
                     File(widget.imagePath),
@@ -111,19 +113,19 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
               ),
               
               // Edge Handles
-              if (isEditing) ...[
+              if (state.isEditing) ...[
                 // Top Center
                 Positioned(
                   top: 0,
-                  left: offset + (imgWidth / 2) - 16,
+                  left: offset + (state.width / 2) - 16,
                   child: _buildHandle(
                     onPanStart: _onPanStart,
                     onPanUpdate: (details) {
                       setState(() {
                         final dy = details.globalPosition.dy - _startPos.dy;
-                        imgHeight = (_startHeight - dy).clamp(5.0, 2000.0);
-                        final actualDy = imgHeight - _startHeight;
-                        translateY = _startY - actualDy / 2;
+                        state.height = (_startHeight - dy).clamp(5.0, 2000.0);
+                        final actualDy = state.height - _startHeight;
+                        state.translateY = _startY - actualDy / 2;
                       });
                     },
                   ),
@@ -131,15 +133,15 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                 // Bottom Center
                 Positioned(
                   bottom: 0,
-                  left: offset + (imgWidth / 2) - 16,
+                  left: offset + (state.width / 2) - 16,
                   child: _buildHandle(
                     onPanStart: _onPanStart,
                     onPanUpdate: (details) {
                       setState(() {
                         final dy = details.globalPosition.dy - _startPos.dy;
-                        imgHeight = (_startHeight + dy).clamp(5.0, 2000.0);
-                        final actualDy = imgHeight - _startHeight;
-                        translateY = _startY + actualDy / 2;
+                        state.height = (_startHeight + dy).clamp(5.0, 2000.0);
+                        final actualDy = state.height - _startHeight;
+                        state.translateY = _startY + actualDy / 2;
                       });
                     },
                   ),
@@ -147,15 +149,15 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                 // Left Center
                 Positioned(
                   left: 0,
-                  top: offset + (imgHeight / 2) - 16,
+                  top: offset + (state.height / 2) - 16,
                   child: _buildHandle(
                     onPanStart: _onPanStart,
                     onPanUpdate: (details) {
                       setState(() {
                         final dx = details.globalPosition.dx - _startPos.dx;
-                        imgWidth = (_startWidth - dx).clamp(5.0, 2000.0);
-                        final actualDx = imgWidth - _startWidth;
-                        translateX = _startX - actualDx / 2;
+                        state.width = (_startWidth - dx).clamp(5.0, 2000.0);
+                        final actualDx = state.width - _startWidth;
+                        state.translateX = _startX - actualDx / 2;
                       });
                     },
                   ),
@@ -163,15 +165,15 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                 // Right Center
                 Positioned(
                   right: 0,
-                  top: offset + (imgHeight / 2) - 16,
+                  top: offset + (state.height / 2) - 16,
                   child: _buildHandle(
                     onPanStart: _onPanStart,
                     onPanUpdate: (details) {
                       setState(() {
                         final dx = details.globalPosition.dx - _startPos.dx;
-                        imgWidth = (_startWidth + dx).clamp(5.0, 2000.0);
-                        final actualDx = imgWidth - _startWidth;
-                        translateX = _startX + actualDx / 2;
+                        state.width = (_startWidth + dx).clamp(5.0, 2000.0);
+                        final actualDx = state.width - _startWidth;
+                        state.translateX = _startX + actualDx / 2;
                       });
                     },
                   ),
@@ -188,10 +190,10 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                       setState(() {
                         final dx = details.globalPosition.dx - _startPos.dx;
                         final dy = details.globalPosition.dy - _startPos.dy;
-                        imgWidth = (_startWidth - dx).clamp(5.0, 2000.0);
-                        imgHeight = (_startHeight - dy).clamp(5.0, 2000.0);
-                        translateX = _startX - (imgWidth - _startWidth) / 2;
-                        translateY = _startY - (imgHeight - _startHeight) / 2;
+                        state.width = (_startWidth - dx).clamp(5.0, 2000.0);
+                        state.height = (_startHeight - dy).clamp(5.0, 2000.0);
+                        state.translateX = _startX - (state.width - _startWidth) / 2;
+                        state.translateY = _startY - (state.height - _startHeight) / 2;
                       });
                     },
                   ),
@@ -206,10 +208,10 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                       setState(() {
                         final dx = details.globalPosition.dx - _startPos.dx;
                         final dy = details.globalPosition.dy - _startPos.dy;
-                        imgWidth = (_startWidth + dx).clamp(5.0, 2000.0);
-                        imgHeight = (_startHeight - dy).clamp(5.0, 2000.0);
-                        translateX = _startX + (imgWidth - _startWidth) / 2;
-                        translateY = _startY - (imgHeight - _startHeight) / 2;
+                        state.width = (_startWidth + dx).clamp(5.0, 2000.0);
+                        state.height = (_startHeight - dy).clamp(5.0, 2000.0);
+                        state.translateX = _startX + (state.width - _startWidth) / 2;
+                        state.translateY = _startY - (state.height - _startHeight) / 2;
                       });
                     },
                   ),
@@ -224,10 +226,10 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                       setState(() {
                         final dx = details.globalPosition.dx - _startPos.dx;
                         final dy = details.globalPosition.dy - _startPos.dy;
-                        imgWidth = (_startWidth - dx).clamp(5.0, 2000.0);
-                        imgHeight = (_startHeight + dy).clamp(5.0, 2000.0);
-                        translateX = _startX - (imgWidth - _startWidth) / 2;
-                        translateY = _startY + (imgHeight - _startHeight) / 2;
+                        state.width = (_startWidth - dx).clamp(5.0, 2000.0);
+                        state.height = (_startHeight + dy).clamp(5.0, 2000.0);
+                        state.translateX = _startX - (state.width - _startWidth) / 2;
+                        state.translateY = _startY + (state.height - _startHeight) / 2;
                       });
                     },
                   ),
@@ -242,10 +244,10 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                       setState(() {
                         final dx = details.globalPosition.dx - _startPos.dx;
                         final dy = details.globalPosition.dy - _startPos.dy;
-                        imgWidth = (_startWidth + dx).clamp(5.0, 2000.0);
-                        imgHeight = (_startHeight + dy).clamp(5.0, 2000.0);
-                        translateX = _startX + (imgWidth - _startWidth) / 2;
-                        translateY = _startY + (imgHeight - _startHeight) / 2;
+                        state.width = (_startWidth + dx).clamp(5.0, 2000.0);
+                        state.height = (_startHeight + dy).clamp(5.0, 2000.0);
+                        state.translateX = _startX + (state.width - _startWidth) / 2;
+                        state.translateY = _startY + (state.height - _startHeight) / 2;
                       });
                     },
                   ),
@@ -257,7 +259,7 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                   right: 0,
                   child: GestureDetector(
                     onTap: () {
-                      setState(() => isEditing = false);
+                      setState(() => state.isEditing = false);
                     },
                     behavior: HitTestBehavior.opaque,
                     child: Container(
