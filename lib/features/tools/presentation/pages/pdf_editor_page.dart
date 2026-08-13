@@ -10,8 +10,6 @@ import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/pdf_generator.dart';
 import '../widgets/resizable_image_widget.dart';
 
-final ValueNotifier<bool> globalIsExportingNotifier = ValueNotifier<bool>(false);
-
 class PdfEditorPage extends StatefulWidget {
   final String? pdfPath;
   const PdfEditorPage({super.key, this.pdfPath});
