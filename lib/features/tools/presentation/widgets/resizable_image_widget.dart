@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 
@@ -41,6 +42,31 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
   double _startX = 0;
   double _startY = 0;
   Offset _startPos = Offset.zero;
+  Timer? _hideTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _resetHideTimer();
+  }
+
+  @override
+  void dispose() {
+    _hideTimer?.cancel();
+    super.dispose();
+  }
+
+  void _resetHideTimer() {
+    _hideTimer?.cancel();
+    if (!widget.stateData.isEditing) {
+      setState(() => widget.stateData.isEditing = true);
+    }
+    _hideTimer = Timer(const Duration(milliseconds: 2000), () {
+      if (mounted && widget.stateData.isEditing) {
+        setState(() => widget.stateData.isEditing = false);
+      }
+    });
+  }
 
   void _onPanStart(DragStartDetails details) {
     _startWidth = widget.stateData.width;
@@ -48,6 +74,7 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
     _startX = widget.stateData.translateX;
     _startY = widget.stateData.translateY;
     _startPos = details.globalPosition;
+    _resetHideTimer();
   }
 
   Widget _buildHandle({
@@ -57,7 +84,10 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
     if (!widget.stateData.isEditing) return const SizedBox();
     return GestureDetector(
       onPanStart: onPanStart,
-      onPanUpdate: onPanUpdate,
+      onPanUpdate: (details) {
+        onPanUpdate(details);
+        _resetHideTimer();
+      },
       behavior: HitTestBehavior.opaque,
       child: Container(
         width: 32, // Increased hit area for easier grabbing
@@ -75,7 +105,9 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
         ),
       ),
     );
-  }  @override
+  }
+
+  @override
   Widget build(BuildContext context) {
     final state = widget.stateData;
     return ValueListenableBuilder<bool>(
@@ -88,8 +120,8 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
 
         return Listener(
           onPointerDown: (_) {
-            if (!state.isEditing && !isExporting) {
-              setState(() => state.isEditing = true);
+            if (!isExporting) {
+              _resetHideTimer();
             }
           },
           child: Transform.translate(
@@ -108,7 +140,7 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                     height: state.height,
                     child: Container(
                       decoration: BoxDecoration(
-                        border: showHandles ? Border.all(color: Colors.grey.shade700, width: 1.5) : null,
+                        border: showHandles ? Border.all(color: Colors.blueAccent, width: 2.0) : null,
                       ),
                       child: Image.file(
                         File(widget.imagePath),
@@ -257,35 +289,14 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                     },
                   ),
                 ),
-                
-                // Apply/Done Button
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: Listener(
-                    onPointerDown: (_) {
-                      setState(() => state.isEditing = false);
-                    },
-                    behavior: HitTestBehavior.opaque,
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 32, right: 32),
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.green,
-                        shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
-                      ),
-                      child: const Icon(Icons.check, color: Colors.white, size: 20),
-                    ),
-                  ),
-                ),
               ],
-            ],
+                ],
+              ),
+            ),
           ),
-          ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }
 
