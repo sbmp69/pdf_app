@@ -5,6 +5,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/utils/pdf_generator.dart';
 import '../../../../core/utils/ocr_scanner.dart';
+import 'package:flutter/services.dart';
 
 class ScannerPage extends StatefulWidget {
   const ScannerPage({super.key});
@@ -48,7 +49,12 @@ class _ScannerPageState extends State<ScannerPage> {
     try {
       List<XFile> images = [];
       if (source == ImageSource.camera) {
-        final XFile? photo = await _picker.pickImage(source: ImageSource.camera);
+        final XFile? photo = await _picker.pickImage(
+          source: ImageSource.camera,
+          imageQuality: 50,
+          maxWidth: 1920,
+          maxHeight: 1920,
+        );
         if (photo != null) {
           images.add(photo);
         }
@@ -173,6 +179,16 @@ class _ScannerPageState extends State<ScannerPage> {
                       title: const Text('Extracted Text'),
                       content: SingleChildScrollView(child: Text(text)),
                       actions: [
+                        TextButton(
+                          onPressed: () async {
+                            await Clipboard.setData(ClipboardData(text: text));
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Text copied to clipboard!')),
+                            );
+                          },
+                          child: const Text('Copy'),
+                        ),
                         TextButton(
                           onPressed: () => Navigator.pop(context),
                           child: const Text('Close'),

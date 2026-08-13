@@ -81,11 +81,51 @@ class _DocumentsPageState extends State<DocumentsPage> {
                         leading: const Icon(Icons.picture_as_pdf, color: Colors.red, size: 40),
                         title: Text(fileName, maxLines: 1, overflow: TextOverflow.ellipsis),
                         subtitle: Text('$fileSize • ${lastModified.day}/${lastModified.month}/${lastModified.year}'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.share),
-                          onPressed: () {
-                            Share.shareXFiles([XFile(file.path)], text: 'Check out this PDF document.');
+                        trailing: PopupMenuButton<String>(
+                          onSelected: (value) async {
+                            if (value == 'share') {
+                              Share.shareXFiles([XFile(file.path)], text: 'Check out this PDF document.');
+                            } else if (value == 'rename') {
+                              TextEditingController nameController = TextEditingController(text: fileName.replaceAll('.pdf', ''));
+                              final String? newName = await showDialog<String>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Rename PDF'),
+                                  content: TextField(
+                                    controller: nameController,
+                                    decoration: const InputDecoration(labelText: 'New Name', suffixText: '.pdf'),
+                                    autofocus: true,
+                                  ),
+                                  actions: [
+                                    TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                                    FilledButton(
+                                      onPressed: () {
+                                        if (nameController.text.trim().isEmpty) return;
+                                        Navigator.pop(context, nameController.text.trim());
+                                      },
+                                      child: const Text('Rename'),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              
+                              if (newName != null) {
+                                final String newPath = '${file.parent.path}/$newName.pdf';
+                                await file.rename(newPath);
+                                _loadDocuments();
+                              }
+                            }
                           },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'rename',
+                              child: ListTile(leading: Icon(Icons.edit), title: Text('Rename'), contentPadding: EdgeInsets.zero),
+                            ),
+                            const PopupMenuItem(
+                              value: 'share',
+                              child: ListTile(leading: Icon(Icons.share), title: Text('Share'), contentPadding: EdgeInsets.zero),
+                            ),
+                          ],
                         ),
                         onTap: () {
                           OpenFile.open(file.path);
