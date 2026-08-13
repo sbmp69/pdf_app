@@ -83,7 +83,9 @@ class _DocumentsPageState extends State<DocumentsPage> {
                         subtitle: Text('$fileSize • ${lastModified.day}/${lastModified.month}/${lastModified.year}'),
                         trailing: PopupMenuButton<String>(
                           onSelected: (value) async {
-                            if (value == 'share') {
+                            if (value == 'edit') {
+                              context.push('/pdf_editor', extra: file.path);
+                            } else if (value == 'share') {
                               Share.shareXFiles([XFile(file.path)], text: 'Check out this PDF document.');
                             } else if (value == 'rename') {
                               TextEditingController nameController = TextEditingController(text: fileName.replaceAll('.pdf', ''));
@@ -117,6 +119,10 @@ class _DocumentsPageState extends State<DocumentsPage> {
                             }
                           },
                           itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: ListTile(leading: Icon(Icons.edit_document), title: Text('Edit PDF'), contentPadding: EdgeInsets.zero),
+                            ),
                             const PopupMenuItem(
                               value: 'rename',
                               child: ListTile(leading: Icon(Icons.edit), title: Text('Rename'), contentPadding: EdgeInsets.zero),

@@ -21,6 +21,10 @@ class MainActivity: FlutterActivity() {
         }
     }
 
+    override fun getInitialRoute(): String {
+        return "/"
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent) // Update the intent so it can be handled
