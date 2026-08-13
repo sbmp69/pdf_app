@@ -262,8 +262,8 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
                 Positioned(
                   top: 0,
                   right: 0,
-                  child: GestureDetector(
-                    onTap: () {
+                  child: Listener(
+                    onPointerDown: (_) {
                       setState(() => state.isEditing = false);
                     },
                     behavior: HitTestBehavior.opaque,
