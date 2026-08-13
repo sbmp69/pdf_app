@@ -255,9 +255,6 @@ class ImagePainterScreen extends StatelessWidget {
                       setLayer(
                         WidgetLayer(
                           widget: ResizableImageWidget(imagePath: image.path),
-                          exportConfigs: WidgetLayerExportConfigs(
-                            fileUrl: image.path,
-                          ),
                         ),
                       );
                       // setLayer automatically closes the sticker bottom sheet!
