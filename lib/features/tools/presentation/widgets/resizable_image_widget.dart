@@ -20,7 +20,9 @@ class ResizableImageWidget extends StatefulWidget {
 class _ResizableImageWidgetState extends State<ResizableImageWidget> {
   late double imgWidth;
   late double imgHeight;
-  bool isEditing = true; // Show handles immediately!
+  double translateX = 0.0;
+  double translateY = 0.0;
+  bool isEditing = true;
 
   @override
   void initState() {
@@ -53,7 +55,6 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // The total size includes the 12px padding on all sides for the handles.
     final totalWidth = isEditing ? imgWidth + 24 : imgWidth;
     final totalHeight = isEditing ? imgHeight + 24 : imgHeight;
     final offset = isEditing ? 12.0 : 0.0;
@@ -64,133 +65,156 @@ class _ResizableImageWidgetState extends State<ResizableImageWidget> {
           setState(() => isEditing = true);
         }
       },
-      child: SizedBox(
-        width: totalWidth,
-        height: totalHeight,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            // Image Box
-            Positioned(
-              left: offset,
-              top: offset,
-              width: imgWidth,
-              height: imgHeight,
-              child: Container(
-                decoration: BoxDecoration(
-                  border: isEditing ? Border.all(color: Colors.grey.shade700, width: 1) : null,
-                ),
-                child: Image.file(
-                  File(widget.imagePath),
-                  fit: BoxFit.fill,
-                ),
-              ),
-            ),
-            
-            // Edge Handles
-            if (isEditing) ...[
-              // Top Center
+      child: Transform.translate(
+        offset: Offset(translateX, translateY),
+        child: SizedBox(
+          width: totalWidth,
+          height: totalHeight,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // Image Box
               Positioned(
-                top: 0,
-                left: offset + (imgWidth / 2) - 12,
-                child: _buildHandle(onPanUpdate: (details) {
-                  setState(() => imgHeight = (imgHeight - details.delta.dy * 2).clamp(20.0, 2000.0));
-                }),
-              ),
-              // Bottom Center
-              Positioned(
-                bottom: 0,
-                left: offset + (imgWidth / 2) - 12,
-                child: _buildHandle(onPanUpdate: (details) {
-                  setState(() => imgHeight = (imgHeight + details.delta.dy * 2).clamp(20.0, 2000.0));
-                }),
-              ),
-              // Left Center
-              Positioned(
-                left: 0,
-                top: offset + (imgHeight / 2) - 12,
-                child: _buildHandle(onPanUpdate: (details) {
-                  setState(() => imgWidth = (imgWidth - details.delta.dx * 2).clamp(20.0, 2000.0));
-                }),
-              ),
-              // Right Center
-              Positioned(
-                right: 0,
-                top: offset + (imgHeight / 2) - 12,
-                child: _buildHandle(onPanUpdate: (details) {
-                  setState(() => imgWidth = (imgWidth + details.delta.dx * 2).clamp(20.0, 2000.0));
-                }),
-              ),
-              
-              // Corner Handles
-              // Top Left
-              Positioned(
-                top: 0,
-                left: 0,
-                child: _buildHandle(onPanUpdate: (details) {
-                  setState(() {
-                    imgHeight = (imgHeight - details.delta.dy * 2).clamp(20.0, 2000.0);
-                    imgWidth = (imgWidth - details.delta.dx * 2).clamp(20.0, 2000.0);
-                  });
-                }),
-              ),
-              // Top Right
-              Positioned(
-                top: 0,
-                right: 0,
-                child: _buildHandle(onPanUpdate: (details) {
-                  setState(() {
-                    imgHeight = (imgHeight - details.delta.dy * 2).clamp(20.0, 2000.0);
-                    imgWidth = (imgWidth + details.delta.dx * 2).clamp(20.0, 2000.0);
-                  });
-                }),
-              ),
-              // Bottom Left
-              Positioned(
-                bottom: 0,
-                left: 0,
-                child: _buildHandle(onPanUpdate: (details) {
-                  setState(() {
-                    imgHeight = (imgHeight + details.delta.dy * 2).clamp(20.0, 2000.0);
-                    imgWidth = (imgWidth - details.delta.dx * 2).clamp(20.0, 2000.0);
-                  });
-                }),
-              ),
-              // Bottom Right
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: _buildHandle(onPanUpdate: (details) {
-                  setState(() {
-                    imgHeight = (imgHeight + details.delta.dy * 2).clamp(20.0, 2000.0);
-                    imgWidth = (imgWidth + details.delta.dx * 2).clamp(20.0, 2000.0);
-                  });
-                }),
-              ),
-              
-              // Apply/Done Button to hide handles before export
-              Positioned(
-                top: 0,
-                right: 0, // Placed inside the bounding box so it gets hit tests
-                child: GestureDetector(
-                  onTap: () {
-                    setState(() => isEditing = false);
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: Container(
-                    margin: const EdgeInsets.only(top: 24, right: 24),
-                    padding: const EdgeInsets.all(4),
-                    decoration: const BoxDecoration(
-                      color: Colors.green,
-                      shape: BoxShape.circle,
-                      boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
-                    ),
-                    child: const Icon(Icons.check, color: Colors.white, size: 18),
+                left: offset,
+                top: offset,
+                width: imgWidth,
+                height: imgHeight,
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: isEditing ? Border.all(color: Colors.grey.shade700, width: 1) : null,
+                  ),
+                  child: Image.file(
+                    File(widget.imagePath),
+                    fit: BoxFit.fill,
                   ),
                 ),
               ),
-            ]
-          ],
+              
+              // Edge Handles
+              if (isEditing) ...[
+                // Top Center
+                Positioned(
+                  top: 0,
+                  left: offset + (imgWidth / 2) - 12,
+                  child: _buildHandle(onPanUpdate: (details) {
+                    setState(() {
+                      imgHeight = (imgHeight - details.delta.dy).clamp(5.0, 2000.0);
+                      translateY += details.delta.dy / 2;
+                    });
+                  }),
+                ),
+                // Bottom Center
+                Positioned(
+                  bottom: 0,
+                  left: offset + (imgWidth / 2) - 12,
+                  child: _buildHandle(onPanUpdate: (details) {
+                    setState(() {
+                      imgHeight = (imgHeight + details.delta.dy).clamp(5.0, 2000.0);
+                      translateY += details.delta.dy / 2;
+                    });
+                  }),
+                ),
+                // Left Center
+                Positioned(
+                  left: 0,
+                  top: offset + (imgHeight / 2) - 12,
+                  child: _buildHandle(onPanUpdate: (details) {
+                    setState(() {
+                      imgWidth = (imgWidth - details.delta.dx).clamp(5.0, 2000.0);
+                      translateX += details.delta.dx / 2;
+                    });
+                  }),
+                ),
+                // Right Center
+                Positioned(
+                  right: 0,
+                  top: offset + (imgHeight / 2) - 12,
+                  child: _buildHandle(onPanUpdate: (details) {
+                    setState(() {
+                      imgWidth = (imgWidth + details.delta.dx).clamp(5.0, 2000.0);
+                      translateX += details.delta.dx / 2;
+                    });
+                  }),
+                ),
+                
+                // Corner Handles
+                // Top Left
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  child: _buildHandle(onPanUpdate: (details) {
+                    setState(() {
+                      imgHeight = (imgHeight - details.delta.dy).clamp(5.0, 2000.0);
+                      imgWidth = (imgWidth - details.delta.dx).clamp(5.0, 2000.0);
+                      translateX += details.delta.dx / 2;
+                      translateY += details.delta.dy / 2;
+                    });
+                  }),
+                ),
+                // Top Right
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: _buildHandle(onPanUpdate: (details) {
+                    setState(() {
+                      imgHeight = (imgHeight - details.delta.dy).clamp(5.0, 2000.0);
+                      imgWidth = (imgWidth + details.delta.dx).clamp(5.0, 2000.0);
+                      translateX += details.delta.dx / 2;
+                      translateY += details.delta.dy / 2;
+                    });
+                  }),
+                ),
+                // Bottom Left
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  child: _buildHandle(onPanUpdate: (details) {
+                    setState(() {
+                      imgHeight = (imgHeight + details.delta.dy).clamp(5.0, 2000.0);
+                      imgWidth = (imgWidth - details.delta.dx).clamp(5.0, 2000.0);
+                      translateX += details.delta.dx / 2;
+                      translateY += details.delta.dy / 2;
+                    });
+                  }),
+                ),
+                // Bottom Right
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: _buildHandle(onPanUpdate: (details) {
+                    setState(() {
+                      imgHeight = (imgHeight + details.delta.dy).clamp(5.0, 2000.0);
+                      imgWidth = (imgWidth + details.delta.dx).clamp(5.0, 2000.0);
+                      translateX += details.delta.dx / 2;
+                      translateY += details.delta.dy / 2;
+                    });
+                  }),
+                ),
+                
+                // Apply/Done Button to hide handles before export
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() => isEditing = false);
+                    },
+                    behavior: HitTestBehavior.opaque,
+                    child: Container(
+                      margin: const EdgeInsets.only(top: 24, right: 24),
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.green,
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 4)],
+                      ),
+                      child: const Icon(Icons.check, color: Colors.white, size: 18),
+                    ),
+                  ),
+                ),
+              ]
+            ],
+          ),
         ),
       ),
     );
