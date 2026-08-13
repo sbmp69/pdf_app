@@ -229,6 +229,10 @@ class ImagePainterScreen extends StatelessWidget {
       ),
       configs: ProImageEditorConfigs(
         designMode: ImageEditorDesignMode.material,
+        tuneEditor: const TuneEditorConfigs(enabled: false),
+        filterEditor: const FilterEditorConfigs(enabled: false),
+        blurEditor: const BlurEditorConfigs(enabled: false),
+        emojiEditor: const EmojiEditorConfigs(enabled: false),
         stickerEditor: StickerEditorConfigs(
           enabled: true,
           builder: (setLayer, scrollController) {
