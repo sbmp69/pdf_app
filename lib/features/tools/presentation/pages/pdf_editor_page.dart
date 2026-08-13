@@ -6,6 +6,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pro_image_editor/pro_image_editor.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/pdf_generator.dart';
 
 class PdfEditorPage extends StatefulWidget {
@@ -226,8 +227,30 @@ class ImagePainterScreen extends StatelessWidget {
           }
         },
       ),
-      configs: const ProImageEditorConfigs(
+      configs: ProImageEditorConfigs(
         designMode: ImageEditorDesignMode.material,
+        stickerEditor: StickerEditorConfigs(
+          enabled: true,
+          builder: (setLayer, scrollController) {
+            return Container(
+              color: Colors.white,
+              child: Center(
+                child: FilledButton.icon(
+                  icon: const Icon(Icons.add_photo_alternate),
+                  label: const Text('Pick Image from Gallery'),
+                  onPressed: () async {
+                    final picker = ImagePicker();
+                    final image = await picker.pickImage(source: ImageSource.gallery);
+                    if (image != null) {
+                      setLayer(WidgetLayer(widget: Image.file(File(image.path))));
+                      if (context.mounted) Navigator.pop(context); // Close bottom sheet
+                    }
+                  },
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }
