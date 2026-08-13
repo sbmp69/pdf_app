@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pro_image_editor/pro_image_editor.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/pdf_generator.dart';
+import '../widgets/resizable_image_widget.dart';
 
 class PdfEditorPage extends StatefulWidget {
   final String? pdfPath;
@@ -253,11 +254,7 @@ class ImagePainterScreen extends StatelessWidget {
                     if (image != null) {
                       setLayer(
                         WidgetLayer(
-                          widget: SizedBox(
-                            width: 200,
-                            height: 200,
-                            child: Image.file(File(image.path), fit: BoxFit.contain),
-                          ),
+                          widget: ResizableImageWidget(imagePath: image.path),
                           exportConfigs: WidgetLayerExportConfigs(
                             fileUrl: image.path,
                           ),
