@@ -229,6 +229,11 @@ class ImagePainterScreen extends StatelessWidget {
       ),
       configs: ProImageEditorConfigs(
         designMode: ImageEditorDesignMode.material,
+        i18n: const I18n(
+          stickerEditor: I18nStickerEditor(
+            bottomNavigationBarText: 'Add Image',
+          ),
+        ),
         tuneEditor: const TuneEditorConfigs(enabled: false),
         filterEditor: const FilterEditorConfigs(enabled: false),
         blurEditor: const BlurEditorConfigs(enabled: false),
@@ -246,7 +251,18 @@ class ImagePainterScreen extends StatelessWidget {
                     final picker = ImagePicker();
                     final image = await picker.pickImage(source: ImageSource.gallery);
                     if (image != null) {
-                      setLayer(WidgetLayer(widget: Image.file(File(image.path))));
+                      setLayer(
+                        WidgetLayer(
+                          widget: SizedBox(
+                            width: 200,
+                            height: 200,
+                            child: Image.file(File(image.path), fit: BoxFit.contain),
+                          ),
+                          exportConfigs: WidgetLayerExportConfigs(
+                            fileUrl: image.path,
+                          ),
+                        ),
+                      );
                       if (context.mounted) Navigator.pop(context); // Close bottom sheet
                     }
                   },
