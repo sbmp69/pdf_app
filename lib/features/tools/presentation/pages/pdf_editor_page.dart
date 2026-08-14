@@ -7,6 +7,7 @@ import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pro_image_editor/pro_image_editor.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 import '../../../../core/utils/pdf_generator.dart';
 import '../widgets/resizable_image_widget.dart';
 import '../widgets/signature_pad_dialog.dart';
@@ -59,9 +60,24 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
       
       await for (var page in Printing.raster(bytes, dpi: 200)) {
         final imageBytes = await page.toPng();
-        final path = '${directory.path}/edit_page_$pageIndex.png';
-        await File(path).writeAsBytes(imageBytes);
-        images.add(path);
+        
+        // Fix transparent background issue by drawing on a white canvas
+        final decodedImage = img.decodePng(imageBytes);
+        if (decodedImage != null) {
+          final whiteBgImage = img.Image(width: decodedImage.width, height: decodedImage.height);
+          img.fill(whiteBgImage, color: img.ColorRgb8(255, 255, 255));
+          img.compositeImage(whiteBgImage, decodedImage);
+          
+          final finalBytes = img.encodePng(whiteBgImage);
+          final path = '${directory.path}/edit_page_$pageIndex.png';
+          await File(path).writeAsBytes(finalBytes);
+          images.add(path);
+        } else {
+          // Fallback if decoding fails
+          final path = '${directory.path}/edit_page_$pageIndex.png';
+          await File(path).writeAsBytes(imageBytes);
+          images.add(path);
+        }
         pageIndex++;
       }
       
