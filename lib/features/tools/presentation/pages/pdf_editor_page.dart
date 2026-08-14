@@ -94,20 +94,7 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
     }
   }
 
-  Future<void> _openPainter(int index) async {
-    final updatedPath = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ImagePainterScreen(imagePath: _pageImages[index]),
-      ),
-    );
 
-    if (updatedPath != null) {
-      setState(() {
-        _pageImages[index] = updatedPath;
-      });
-    }
-  }
 
   Future<void> _saveFinalPdf() async {
     if (_pageImages.isEmpty) return;
@@ -204,13 +191,6 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
         actions: [
           if (_pageImages.isNotEmpty)
             IconButton(
-              icon: Icon(_watermarkText == null ? Icons.branding_watermark_outlined : Icons.branding_watermark),
-              color: _watermarkText == null ? null : Colors.blue,
-              tooltip: 'Add Watermark',
-              onPressed: _showWatermarkDialog,
-            ),
-          if (_pageImages.isNotEmpty)
-            IconButton(
               icon: const Icon(Icons.save),
               tooltip: 'Save as PDF',
               onPressed: _saveFinalPdf,
@@ -239,7 +219,22 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
                         itemCount: _pageImages.length,
                         itemBuilder: (context, index) {
                           return GestureDetector(
-                            onTap: () => _openPainter(index),
+                            onTap: () async {
+                              final updatedPath = await Navigator.push<String>(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ImagePainterScreen(
+                                    imagePath: _pageImages[index],
+                                    onAddWatermark: _showWatermarkDialog,
+                                  ),
+                                ),
+                              );
+                              if (updatedPath != null) {
+                                setState(() {
+                                  _pageImages[index] = updatedPath;
+                                });
+                              }
+                            },
                             child: Card(
                               elevation: 4,
                               clipBehavior: Clip.antiAlias,
@@ -271,13 +266,29 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
                     ),
                   ],
                 ),
+      floatingActionButton: _pageImages.isNotEmpty 
+          ? FloatingActionButton.extended(
+              onPressed: _saveFinalPdf,
+              icon: const Icon(Icons.picture_as_pdf),
+              label: const Text('Save Final PDF', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            )
+          : null,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
   }
 }
 
 class ImagePainterScreen extends StatelessWidget {
   final String imagePath;
-  const ImagePainterScreen({super.key, required this.imagePath});
+  final VoidCallback onAddWatermark;
+  
+  const ImagePainterScreen({
+    super.key, 
+    required this.imagePath,
+    required this.onAddWatermark,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -354,6 +365,15 @@ class ImagePainterScreen extends StatelessWidget {
                             if (signaturePath != null) {
                               setLayer(WidgetLayer(widget: ResizableImageWidget(imagePath: signaturePath)));
                             }
+                          },
+                        ),
+                        _buildActionCard(
+                          icon: Icons.branding_watermark,
+                          label: 'PDF Watermark',
+                          color: Colors.orange,
+                          onTap: () {
+                            Navigator.pop(context); // Close the sticker bottom sheet
+                            onAddWatermark();
                           },
                         ),
                       ],
