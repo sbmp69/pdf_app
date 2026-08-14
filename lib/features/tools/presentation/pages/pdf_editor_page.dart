@@ -301,7 +301,7 @@ class ImagePainterScreen extends StatelessWidget {
         designMode: ImageEditorDesignMode.material,
         i18n: const I18n(
           stickerEditor: I18nStickerEditor(
-            bottomNavigationBarText: 'Add Image',
+            bottomNavigationBarText: 'Add Element',
           ),
         ),
         tuneEditor: const TuneEditorConfigs(enabled: false),
@@ -312,52 +312,79 @@ class ImagePainterScreen extends StatelessWidget {
           enabled: true,
           builder: (setLayer, scrollController) {
             return Container(
-              color: Colors.white,
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    FilledButton.icon(
-                      icon: const Icon(Icons.add_photo_alternate),
-                      label: const Text('Pick Image from Gallery'),
-                      onPressed: () async {
-                        final picker = ImagePicker();
-                        final image = await picker.pickImage(source: ImageSource.gallery);
-                        if (image != null) {
-                          setLayer(
-                            WidgetLayer(
-                              widget: ResizableImageWidget(imagePath: image.path),
-                            ),
-                          );
-                        }
-                      },
+              color: const Color(0xFF1E1E1E), // Dark theme to match ProImageEditor
+              child: Column(
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text(
+                      'Choose an Element',
+                      style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      icon: const Icon(Icons.draw),
-                      label: const Text('Draw Signature'),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.deepPurple,
-                      ),
-                      onPressed: () async {
-                        final signaturePath = await showDialog<String>(
-                          context: context,
-                          builder: (context) => const SignaturePadDialog(),
-                        );
-                        if (signaturePath != null) {
-                          setLayer(
-                            WidgetLayer(
-                              widget: ResizableImageWidget(imagePath: signaturePath),
-                            ),
-                          );
-                        }
-                      },
+                  ),
+                  Expanded(
+                    child: GridView.count(
+                      controller: scrollController,
+                      crossAxisCount: 2,
+                      padding: const EdgeInsets.all(16),
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16,
+                      children: [
+                        _buildActionCard(
+                          icon: Icons.add_photo_alternate,
+                          label: 'Gallery Image',
+                          color: Colors.blue,
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final image = await picker.pickImage(source: ImageSource.gallery);
+                            if (image != null) {
+                              setLayer(WidgetLayer(widget: ResizableImageWidget(imagePath: image.path)));
+                            }
+                          },
+                        ),
+                        _buildActionCard(
+                          icon: Icons.draw,
+                          label: 'Draw Signature',
+                          color: Colors.deepPurple,
+                          onTap: () async {
+                            final signaturePath = await showDialog<String>(
+                              context: context,
+                              builder: (context) => const SignaturePadDialog(),
+                            );
+                            if (signaturePath != null) {
+                              setLayer(WidgetLayer(widget: ResizableImageWidget(imagePath: signaturePath)));
+                            }
+                          },
+                        ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionCard({required IconData icon, required String label, required Color color, required VoidCallback onTap}) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF2C2C2C),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.5), width: 2),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 48, color: color),
+            const SizedBox(height: 12),
+            Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ],
         ),
       ),
     );

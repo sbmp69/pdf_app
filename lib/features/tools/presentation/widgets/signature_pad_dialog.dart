@@ -80,8 +80,10 @@ class _SignaturePadDialogState extends State<SignaturePadDialog> {
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            child: Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 8,
+              runSpacing: 8,
               children: [
                 TextButton.icon(
                   onPressed: () => Navigator.pop(context),
