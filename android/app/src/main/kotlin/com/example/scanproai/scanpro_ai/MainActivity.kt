@@ -35,10 +35,17 @@ class MainActivity: FlutterActivity() {
         val type = intent.type
 
         if ((Intent.ACTION_SEND == action || Intent.ACTION_VIEW == action) && type != null) {
-            if ("application/pdf" == type) {
+            val extension = when (type) {
+                "application/pdf" -> ".pdf"
+                "application/msword" -> ".doc"
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document" -> ".docx"
+                else -> null
+            }
+
+            if (extension != null) {
                 val uri = intent.data ?: intent.getParcelableExtra<Uri>(Intent.EXTRA_STREAM)
                 if (uri != null) {
-                    val filePath = copyUriToCache(uri)
+                    val filePath = copyUriToCache(uri, extension)
                     if (filePath != null) {
                         result.success(filePath)
                         return
@@ -49,10 +56,10 @@ class MainActivity: FlutterActivity() {
         result.success("")
     }
 
-    private fun copyUriToCache(uri: Uri): String? {
+    private fun copyUriToCache(uri: Uri, extension: String): String? {
         return try {
             val inputStream = contentResolver.openInputStream(uri) ?: return null
-            val file = java.io.File(cacheDir, "shared_document_${System.currentTimeMillis()}.pdf")
+            val file = java.io.File(cacheDir, "shared_document_${System.currentTimeMillis()}$extension")
             val outputStream = java.io.FileOutputStream(file)
             inputStream.copyTo(outputStream)
             inputStream.close()

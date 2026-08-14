@@ -47,9 +47,11 @@ class _ScanProAppState extends State<ScanProApp> with WidgetsBindingObserver {
     try {
       final String? sharedData = await platform.invokeMethod('getSharedData');
       if (sharedData != null && sharedData.isNotEmpty) {
-        // Shared data will be a content URI like content://...
-        // Route directly to our PDF Viewer page!
-        AppRouter.router.push('/pdf_viewer', extra: sharedData);
+        if (sharedData.toLowerCase().endsWith('.pdf')) {
+          AppRouter.router.push('/pdf_viewer', extra: sharedData);
+        } else if (sharedData.toLowerCase().endsWith('.docx') || sharedData.toLowerCase().endsWith('.doc')) {
+          AppRouter.router.push('/docx_viewer', extra: sharedData);
+        }
       }
     } on PlatformException catch (e) {
       debugPrint("Failed to get shared data: '${e.message}'.");
