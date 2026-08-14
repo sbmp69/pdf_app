@@ -9,6 +9,7 @@ import 'package:pro_image_editor/pro_image_editor.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/utils/pdf_generator.dart';
 import '../widgets/resizable_image_widget.dart';
+import '../widgets/signature_pad_dialog.dart';
 
 class PdfEditorPage extends StatefulWidget {
   final String? pdfPath;
@@ -21,6 +22,7 @@ class PdfEditorPage extends StatefulWidget {
 class _PdfEditorPageState extends State<PdfEditorPage> {
   bool _isLoading = false;
   List<String> _pageImages = [];
+  String? _watermarkText;
 
   @override
   void initState() {
@@ -123,7 +125,7 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
 
     setState(() => _isLoading = true);
     try {
-      await PdfGenerator.generatePdfFromImages(_pageImages, customName);
+      await PdfGenerator.generatePdfFromImages(_pageImages, customName, watermarkText: _watermarkText);
       if (!mounted) return;
       setState(() => _isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Saved successfully! Check Documents tab.')));
@@ -135,6 +137,48 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
     }
   }
 
+  Future<void> _showWatermarkDialog() async {
+    TextEditingController textController = TextEditingController(text: _watermarkText ?? '');
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Add Watermark'),
+          content: TextField(
+            controller: textController,
+            decoration: const InputDecoration(
+              labelText: 'Watermark Text',
+              hintText: 'e.g. CONFIDENTIAL',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, _watermarkText),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, ''),
+              child: const Text('Clear'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, textController.text.trim()),
+              child: const Text('Apply'),
+            ),
+          ],
+        );
+      }
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _watermarkText = result.isEmpty ? null : result;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.isEmpty ? 'Watermark removed' : 'Watermark applied')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -142,6 +186,13 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
         title: const Text('Edit PDF Pages'),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
         actions: [
+          if (_pageImages.isNotEmpty)
+            IconButton(
+              icon: Icon(_watermarkText == null ? Icons.branding_watermark_outlined : Icons.branding_watermark),
+              color: _watermarkText == null ? null : Colors.blue,
+              tooltip: 'Add Watermark',
+              onPressed: _showWatermarkDialog,
+            ),
           if (_pageImages.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.save),
@@ -247,21 +298,46 @@ class ImagePainterScreen extends StatelessWidget {
             return Container(
               color: Colors.white,
               child: Center(
-                child: FilledButton.icon(
-                  icon: const Icon(Icons.add_photo_alternate),
-                  label: const Text('Pick Image from Gallery'),
-                  onPressed: () async {
-                    final picker = ImagePicker();
-                    final image = await picker.pickImage(source: ImageSource.gallery);
-                    if (image != null) {
-                      setLayer(
-                        WidgetLayer(
-                          widget: ResizableImageWidget(imagePath: image.path),
-                        ),
-                      );
-                      // setLayer automatically closes the sticker bottom sheet!
-                    }
-                  },
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    FilledButton.icon(
+                      icon: const Icon(Icons.add_photo_alternate),
+                      label: const Text('Pick Image from Gallery'),
+                      onPressed: () async {
+                        final picker = ImagePicker();
+                        final image = await picker.pickImage(source: ImageSource.gallery);
+                        if (image != null) {
+                          setLayer(
+                            WidgetLayer(
+                              widget: ResizableImageWidget(imagePath: image.path),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton.icon(
+                      icon: const Icon(Icons.draw),
+                      label: const Text('Draw Signature'),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: Colors.deepPurple,
+                      ),
+                      onPressed: () async {
+                        final signaturePath = await showDialog<String>(
+                          context: context,
+                          builder: (context) => const SignaturePadDialog(),
+                        );
+                        if (signaturePath != null) {
+                          setLayer(
+                            WidgetLayer(
+                              widget: ResizableImageWidget(imagePath: signaturePath),
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
               ),
             );
