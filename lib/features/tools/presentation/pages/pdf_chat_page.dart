@@ -22,7 +22,6 @@ class _PdfChatPageState extends State<PdfChatPage> {
   bool _isLoading = false;
   bool _isExtracting = true;
   String _pdfText = '';
-  String? _apiKey;
 
   @override
   void initState() {
@@ -31,62 +30,13 @@ class _PdfChatPageState extends State<PdfChatPage> {
   }
 
   Future<void> _checkApiKeyAndInit() async {
-    final prefs = await SharedPreferences.getInstance();
-    _apiKey = prefs.getString('openai_api_key');
+    // IMPORTANT: Replace this placeholder with your actual OpenAI API key.
+    OpenAI.apiKey = "YOUR_API_KEY_HERE";
     
-    if (_apiKey == null || _apiKey!.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _showApiKeyDialog();
-      });
-    } else {
-      OpenAI.apiKey = _apiKey!;
-      _extractPdfText();
-    }
+    _extractPdfText();
   }
 
-  Future<void> _showApiKeyDialog() async {
-    final controller = TextEditingController();
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Enter OpenAI API Key'),
-          content: TextField(
-            controller: controller,
-            decoration: const InputDecoration(
-              labelText: 'API Key',
-              hintText: 'sk-...',
-            ),
-            obscureText: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context); // close dialog
-                Navigator.pop(context); // close chat page if no key provided
-              },
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                final key = controller.text.trim();
-                if (key.isNotEmpty) {
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setString('openai_api_key', key);
-                  _apiKey = key;
-                  OpenAI.apiKey = key;
-                  if (mounted) Navigator.pop(context); // close dialog
-                  _extractPdfText();
-                }
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+
 
   Future<void> _extractPdfText() async {
     setState(() => _isExtracting = true);
@@ -202,13 +152,6 @@ class _PdfChatPageState extends State<PdfChatPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Chat with AI'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.key),
-            tooltip: 'Change API Key',
-            onPressed: _showApiKeyDialog,
-          )
-        ],
       ),
       body: _isExtracting 
           ? const Center(

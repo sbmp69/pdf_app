@@ -340,10 +340,34 @@ class _HomePageState extends State<HomePage> {
               style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 24),
             ),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () => context.push('/scanner'),
-              icon: const Icon(Icons.document_scanner),
-              label: const Text('Scan Document'),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.push('/scanner'),
+                    icon: const Icon(Icons.document_scanner),
+                    label: const Text('Scan Document'),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      FilePickerResult? result = await FilePicker.pickFiles(
+                        type: FileType.custom,
+                        allowedExtensions: ['pdf'],
+                      );
+                      if (result != null && result.files.single.path != null) {
+                        if (context.mounted) {
+                          context.push('/pdf_viewer', extra: result.files.single.path!);
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.folder_open),
+                    label: const Text('Open PDF'),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 32),
             // We pass the callback to QuickToolsGrid by making it accept a function.
