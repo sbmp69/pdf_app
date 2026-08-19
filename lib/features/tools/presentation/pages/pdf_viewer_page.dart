@@ -23,6 +23,13 @@ class PdfViewerPage extends StatelessWidget {
               context.push('/pdf_editor', extra: pdfPath);
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.smart_toy), // AI icon
+            tooltip: 'Ask AI',
+            onPressed: () {
+              context.push('/pdf_chat', extra: pdfPath);
+            },
+          ),
         ],
       ),
       body: SfPdfViewer.file(File(pdfPath)),

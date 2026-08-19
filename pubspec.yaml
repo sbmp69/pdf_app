@@ -38,6 +38,8 @@ dependencies:
   pro_image_editor: 10.0.0
   docx_file_viewer: ^1.0.3
   signature: ^6.4.0
+  dart_openai: ^6.1.1
+  flutter_markdown: ^0.7.7+1
 
 dev_dependencies:
   flutter_test:
