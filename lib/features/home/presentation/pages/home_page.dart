@@ -37,6 +37,21 @@ class _HomePageState extends State<HomePage> {
       case 'Edit PDF':
         context.push('/pdf_editor');
         break;
+      case 'AI Chat':
+        await _aiChat();
+        break;
+    }
+  }
+
+  Future<void> _aiChat() async {
+    FilePickerResult? result = await FilePicker.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (result != null && result.files.single.path != null) {
+      if (mounted) {
+        context.push('/pdf_chat', extra: result.files.single.path!);
+      }
     }
   }
 

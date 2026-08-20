@@ -18,6 +18,7 @@ class QuickToolsGrid extends StatelessWidget {
           _ToolItem('Compress PDF', Icons.compress),
           _ToolItem('Protect PDF', Icons.lock),
           _ToolItem('Edit PDF', Icons.edit_document),
+          _ToolItem('AI Chat', Icons.smart_toy),
         ]),
       ],
     );
