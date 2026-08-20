@@ -63,13 +63,14 @@ class _ScanProAppState extends State<ScanProApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    return AppLockScreen(
-      child: MaterialApp.router(
-        title: 'PDF Master: Scan, Edit & Merge',
-        theme: AppTheme.lightTheme,
-        routerConfig: AppRouter.router,
-        debugShowCheckedModeBanner: false,
-      ),
+    return MaterialApp.router(
+      title: 'PDF Master: Scan, Edit & Merge',
+      theme: AppTheme.lightTheme,
+      routerConfig: AppRouter.router,
+      debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return AppLockScreen(child: child!);
+      },
     );
   }
 }
