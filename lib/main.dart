@@ -7,8 +7,11 @@ import 'core/routing/app_router.dart';
 import 'core/database/database_helper.dart';
 import 'core/widgets/app_lock_screen.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await DatabaseHelper.instance.database;
   runApp(const ProviderScope(child: ScanProApp()));
 }

@@ -5,6 +5,8 @@ import 'package:dart_openai/dart_openai.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:syncfusion_flutter_pdf/pdf.dart';
 
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class PdfChatPage extends StatefulWidget {
   final String pdfPath;
 
@@ -30,8 +32,8 @@ class _PdfChatPageState extends State<PdfChatPage> {
   }
 
   Future<void> _checkApiKeyAndInit() async {
-    // IMPORTANT: Replace this placeholder with your actual OpenAI API key.
-    OpenAI.apiKey = "YOUR_API_KEY_HERE";
+    // Read from .env file
+    OpenAI.apiKey = dotenv.env['OPENAI_API_KEY'] ?? '';
     
     _extractPdfText();
   }
