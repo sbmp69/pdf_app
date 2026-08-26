@@ -46,9 +46,7 @@ class _HomePageState extends State<HomePage> {
       case 'Unlock PDF':
         await _unlockPdf();
         break;
-      case 'Repair PDF':
-        await _repairPdf();
-        break;
+
       case 'Split PDF':
         await _pickAndRoute('/split_pdf');
         break;
