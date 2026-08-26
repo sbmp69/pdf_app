@@ -117,9 +117,13 @@ class _DocumentsPageState extends State<DocumentsPage> {
                                   _loadDocuments();
                                 }
                               } else if (value == 'download') {
-                                Share.shareXFiles([XFile(file.path)], text: 'Download $fileName');
-                                if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Choose "Save to Device" or a folder')));
+                                final String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+                                if (selectedDirectory != null) {
+                                  final String savePath = '$selectedDirectory/$fileName';
+                                  await file.copy(savePath);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Saved to $savePath')));
+                                  }
                                 }
                               } else if (value == 'delete') {
                                 final bool? confirm = await showDialog<bool>(
