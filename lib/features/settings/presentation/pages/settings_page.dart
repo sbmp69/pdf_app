@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:local_auth/local_auth.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -30,11 +31,34 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _toggleAppLock(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('app_lock_enabled', value);
-    setState(() {
-      _appLockEnabled = value;
-    });
+    final LocalAuthentication auth = LocalAuthentication();
+    final bool canAuthenticateWithBiometrics = await auth.canCheckBiometrics;
+    final bool canAuthenticate = canAuthenticateWithBiometrics || await auth.isDeviceSupported();
+
+    if (!canAuthenticate) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Device does not support authentication')));
+      }
+      return;
+    }
+
+    try {
+      final bool didAuthenticate = await auth.authenticate(
+        localizedReason: value ? 'Authenticate to enable App Lock' : 'Authenticate to disable App Lock',
+      );
+
+      if (didAuthenticate) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('app_lock_enabled', value);
+        setState(() {
+          _appLockEnabled = value;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Authentication failed or canceled')));
+      }
+    }
   }
 
   Future<void> _toggleAutoSave(bool value) async {
