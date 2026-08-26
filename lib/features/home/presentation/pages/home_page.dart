@@ -188,6 +188,7 @@ class _HomePageState extends State<HomePage> {
     if (result != null && result.files.single.path != null) {
       TextEditingController nameController = TextEditingController(text: 'Protected_${DateTime.now().millisecondsSinceEpoch}');
       TextEditingController passController = TextEditingController();
+      bool obscurePassword = true;
 
       final bool? proceed = await showDialog<bool>(
         context: context,
@@ -201,10 +202,24 @@ class _HomePageState extends State<HomePage> {
                 decoration: const InputDecoration(labelText: 'New File Name', suffixText: '.pdf'),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: passController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Password'),
+              StatefulBuilder(
+                builder: (context, setState) {
+                  return TextField(
+                    controller: passController,
+                    obscureText: obscurePassword,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      suffixIcon: IconButton(
+                        icon: Icon(obscurePassword ? Icons.visibility_off : Icons.visibility),
+                        onPressed: () {
+                          setState(() {
+                            obscurePassword = !obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -437,8 +452,14 @@ class _HomePageState extends State<HomePage> {
               ? AppBar(
                   title: const Text('PDF Master'),
                   actions: [
-                    IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-                    IconButton(icon: const Icon(Icons.settings), onPressed: () {}),
+                    IconButton(
+                      icon: const Icon(Icons.settings),
+                      onPressed: () {
+                        setState(() {
+                          _selectedIndex = 2;
+                        });
+                      },
+                    ),
                   ],
                 )
               : null,

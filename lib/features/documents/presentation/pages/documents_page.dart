@@ -4,7 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
-
+import 'package:file_picker/file_picker.dart';
 class DocumentsPage extends StatefulWidget {
   const DocumentsPage({super.key});
 
@@ -111,27 +111,72 @@ class _DocumentsPageState extends State<DocumentsPage> {
                                 ),
                               );
                               
-                              if (newName != null) {
-                                final String newPath = '${file.parent.path}/$newName.pdf';
-                                await file.rename(newPath);
-                                _loadDocuments();
+                                if (newName != null) {
+                                  final String newPath = '${file.parent.path}/$newName.pdf';
+                                  await file.rename(newPath);
+                                  _loadDocuments();
+                                }
+                              } else if (value == 'download') {
+                                final String? savePath = await FilePicker.platform.saveFile(
+                                  dialogTitle: 'Save PDF',
+                                  fileName: fileName,
+                                  type: FileType.custom,
+                                  allowedExtensions: ['pdf'],
+                                );
+                                if (savePath != null) {
+                                  await file.copy(savePath);
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File saved successfully')));
+                                  }
+                                }
                               }
-                            }
-                          },
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: ListTile(leading: Icon(Icons.edit_document), title: Text('Edit PDF'), contentPadding: EdgeInsets.zero),
-                            ),
-                            const PopupMenuItem(
-                              value: 'rename',
-                              child: ListTile(leading: Icon(Icons.edit), title: Text('Rename'), contentPadding: EdgeInsets.zero),
-                            ),
-                            const PopupMenuItem(
-                              value: 'share',
-                              child: ListTile(leading: Icon(Icons.share), title: Text('Share'), contentPadding: EdgeInsets.zero),
-                            ),
-                          ],
+                              } else if (value == 'delete') {
+                                final bool? confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text('Delete PDF'),
+                                    content: Text('Are you sure you want to delete $fileName?'),
+                                    actions: [
+                                      TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+                                      FilledButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                                        child: const Text('Delete'),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                if (confirm == true) {
+                                  await file.delete();
+                                  _loadDocuments();
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File deleted')));
+                                  }
+                                }
+                              }
+                            },
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'edit',
+                                child: ListTile(leading: Icon(Icons.edit_document), title: Text('Edit PDF'), contentPadding: EdgeInsets.zero),
+                              ),
+                              const PopupMenuItem(
+                                value: 'rename',
+                                child: ListTile(leading: Icon(Icons.edit), title: Text('Rename'), contentPadding: EdgeInsets.zero),
+                              ),
+                              const PopupMenuItem(
+                                value: 'share',
+                                child: ListTile(leading: Icon(Icons.share), title: Text('Share'), contentPadding: EdgeInsets.zero),
+                              ),
+                              const PopupMenuItem(
+                                value: 'download',
+                                child: ListTile(leading: Icon(Icons.download), title: Text('Download'), contentPadding: EdgeInsets.zero),
+                              ),
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: ListTile(leading: Icon(Icons.delete, color: Colors.red), title: Text('Delete', style: TextStyle(color: Colors.red)), contentPadding: EdgeInsets.zero),
+                              ),
+                            ],
                         ),
                         onTap: () {
                           context.push('/pdf_viewer', extra: file.path);
