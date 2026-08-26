@@ -117,7 +117,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
                                   _loadDocuments();
                                 }
                               } else if (value == 'download') {
-                                final String? selectedDirectory = await FilePicker.platform.getDirectoryPath();
+                                final String? selectedDirectory = await FilePicker.getDirectoryPath();
                                 if (selectedDirectory != null) {
                                   final String savePath = '$selectedDirectory/$fileName';
                                   await file.copy(savePath);
