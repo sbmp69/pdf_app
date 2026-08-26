@@ -189,12 +189,21 @@ class _PdfEditorPageState extends State<PdfEditorPage> {
         title: const Text('Edit PDF Pages'),
         leading: IconButton(icon: const Icon(Icons.arrow_back), onPressed: () => context.pop()),
         actions: [
-          if (_pageImages.isNotEmpty)
+          if (_pageImages.isNotEmpty) ...[
+            IconButton(
+              icon: Icon(
+                _watermarkText != null ? Icons.branding_watermark : Icons.branding_watermark_outlined,
+                color: _watermarkText != null ? Colors.blue : null,
+              ),
+              tooltip: _watermarkText == null ? 'Add Watermark' : 'Edit/Remove Watermark',
+              onPressed: _showWatermarkDialog,
+            ),
             IconButton(
               icon: const Icon(Icons.save),
               tooltip: 'Save as PDF',
               onPressed: _saveFinalPdf,
             ),
+          ]
         ],
       ),
       body: _isLoading
