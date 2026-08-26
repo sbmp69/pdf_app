@@ -117,19 +117,10 @@ class _DocumentsPageState extends State<DocumentsPage> {
                                   _loadDocuments();
                                 }
                               } else if (value == 'download') {
-                                final String? savePath = await FilePicker.platform.saveFile(
-                                  dialogTitle: 'Save PDF',
-                                  fileName: fileName,
-                                  type: FileType.custom,
-                                  allowedExtensions: ['pdf'],
-                                );
-                                if (savePath != null) {
-                                  await file.copy(savePath);
-                                  if (mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('File saved successfully')));
-                                  }
+                                Share.shareXFiles([XFile(file.path)], text: 'Download $fileName');
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Choose "Save to Device" or a folder')));
                                 }
-                              }
                               } else if (value == 'delete') {
                                 final bool? confirm = await showDialog<bool>(
                                   context: context,
