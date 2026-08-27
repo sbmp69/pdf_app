@@ -11,16 +11,21 @@ class PdfGenerator {
       final imageFile = File(path);
       if (await imageFile.exists()) {
         final image = pw.MemoryImage(await imageFile.readAsBytes());
+        final pageFormat = PdfPageFormat(
+          image.width!.toDouble(),
+          image.height!.toDouble(),
+          marginAll: 0,
+        );
         pdf.addPage(
           pw.Page(
-            pageFormat: PdfPageFormat.a4,
+            pageFormat: pageFormat,
             build: (pw.Context context) {
               return pw.Stack(
                 alignment: pw.Alignment.center,
                 fit: pw.StackFit.expand,
                 children: [
                   pw.Center(
-                    child: pw.Image(image, fit: pw.BoxFit.contain),
+                    child: pw.Image(image, fit: pw.BoxFit.cover),
                   ),
                   if (watermarkText != null && watermarkText.isNotEmpty)
                     pw.Center(
