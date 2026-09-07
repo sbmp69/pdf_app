@@ -44,6 +44,24 @@ class PdfGenerator {
                         ),
                       ),
                     ),
+                  
+                  // App Watermark (For Free Version)
+                  // TODO: Conditionally hide this when Pro subscription is active
+                  pw.Positioned(
+                    bottom: 10,
+                    right: 10,
+                    child: pw.Opacity(
+                      opacity: 0.6,
+                      child: pw.Text(
+                        'Scanned with ScanPro AI',
+                        style: pw.TextStyle(
+                          color: PdfColors.black,
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               );
             },
