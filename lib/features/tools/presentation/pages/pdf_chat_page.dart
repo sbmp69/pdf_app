@@ -128,8 +128,22 @@ class _PdfChatPageState extends State<PdfChatPage> {
       });
       _scrollToBottom();
     } catch (e) {
+      String errorMessage = 'Sorry, an unexpected error occurred. Please try again.';
+      
+      if (e is RequestFailedException) {
+        if (e.statusCode == 401) {
+          errorMessage = 'Your OpenAI API Key is invalid or expired. Please update it in the Settings page or use a different key.';
+        } else if (e.statusCode == 429) {
+          errorMessage = 'You have exceeded your OpenAI quota. Please check your billing details.';
+        } else {
+          errorMessage = 'OpenAI Error: ${e.message}';
+        }
+      } else {
+        errorMessage = 'Error: $e';
+      }
+
       setState(() {
-        _messages.add({'role': 'ai', 'text': 'Error: $e'});
+        _messages.add({'role': 'ai', 'text': errorMessage});
       });
       _scrollToBottom();
     } finally {
