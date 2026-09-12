@@ -1,4 +1,4 @@
-package com.example.scanproai.scanpro_ai
+package com.sbmp69.pdfmaster
 
 import android.content.Intent
 import android.net.Uri

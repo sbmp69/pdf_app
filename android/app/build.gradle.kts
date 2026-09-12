@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.scanproai.scanpro_ai"
+    namespace = "com.sbmp69.pdfmaster"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
