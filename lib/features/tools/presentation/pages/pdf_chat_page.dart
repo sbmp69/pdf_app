@@ -69,6 +69,38 @@ class _PdfChatPageState extends State<PdfChatPage> {
   Future<void> _sendMessage(String text, {bool isInitialSummary = false}) async {
     if (text.trim().isEmpty) return;
     
+    // Check rate limit if this is a manual chat
+    if (!isInitialSummary) {
+      final prefs = await SharedPreferences.getInstance();
+      final now = DateTime.now();
+      final currentMonth = '${now.year}-${now.month}';
+      
+      final savedMonth = prefs.getString('pdf_chat_month') ?? '';
+      int chatCount = prefs.getInt('pdf_chat_count') ?? 0;
+      
+      if (savedMonth != currentMonth) {
+        await prefs.setString('pdf_chat_month', currentMonth);
+        chatCount = 0;
+        await prefs.setInt('pdf_chat_count', 0);
+      }
+      
+      if (chatCount >= 2) {
+        setState(() {
+          _messages.add({'role': 'user', 'text': text});
+          _messages.add({
+            'role': 'ai', 
+            'text': 'You have reached the free tier limit of 2 chats per month. Please upgrade to Pro for unlimited access.'
+          });
+        });
+        _messageController.clear();
+        _scrollToBottom();
+        return;
+      }
+      
+      // Increment counter for allowed chat
+      await prefs.setInt('pdf_chat_count', chatCount + 1);
+    }
+    
     if (!isInitialSummary) {
       setState(() {
         _messages.add({'role': 'user', 'text': text});
