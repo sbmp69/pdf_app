@@ -51,8 +51,8 @@ class _PdfChatPageState extends State<PdfChatPage> {
       String extractedText = extractor.extractText();
       
       // Limit text if it's too huge to save tokens
-      if (extractedText.length > 30000) {
-        extractedText = extractedText.substring(0, 30000);
+      if (extractedText.length > 10000) {
+        extractedText = extractedText.substring(0, 10000);
       }
       
       _pdfText = extractedText;
@@ -94,7 +94,10 @@ class _PdfChatPageState extends State<PdfChatPage> {
         ),
       ];
 
-      for (var msg in _messages) {
+      // Only send the last 6 messages to save history tokens
+      final recentMessages = _messages.length > 6 ? _messages.sublist(_messages.length - 6) : _messages;
+      
+      for (var msg in recentMessages) {
         apiMessages.add(
           OpenAIChatCompletionChoiceMessageModel(
             role: msg['role'] == 'user' ? OpenAIChatMessageRole.user : OpenAIChatMessageRole.assistant,
@@ -117,7 +120,7 @@ class _PdfChatPageState extends State<PdfChatPage> {
       }
 
       final chatCompletion = await OpenAI.instance.chat.create(
-        model: "gpt-3.5-turbo", // gpt-3.5-turbo is safer for typical user API keys, gpt-4o might not be available
+        model: "gpt-4o-mini", // Much cheaper and faster than gpt-3.5-turbo
         messages: apiMessages,
       );
 
