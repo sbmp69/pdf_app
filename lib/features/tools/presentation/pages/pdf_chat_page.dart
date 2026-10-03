@@ -34,6 +34,7 @@ class _PdfChatPageState extends State<PdfChatPage> {
   Future<void> _checkApiKeyAndInit() async {
     // Read from .env file
     OpenAI.apiKey = dotenv.env['OPENAI_API_KEY'] ?? '';
+    OpenAI.baseUrl = "https://openrouter.ai/api"; // dart_openai appends /v1 automatically
     
     _extractPdfText();
   }
@@ -152,7 +153,7 @@ class _PdfChatPageState extends State<PdfChatPage> {
       }
 
       final chatCompletion = await OpenAI.instance.chat.create(
-        model: "gpt-4o-mini", // Much cheaper and faster than gpt-3.5-turbo
+        model: "inclusionai/ling-3.1-flash", // Free model from OpenRouter
         messages: apiMessages,
       );
 
