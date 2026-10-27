@@ -74,23 +74,23 @@ class _PdfChatPageState extends State<PdfChatPage> {
     if (!isInitialSummary) {
       final prefs = await SharedPreferences.getInstance();
       final now = DateTime.now();
-      final currentMonth = '${now.year}-${now.month}';
+      final currentDay = '${now.year}-${now.month}-${now.day}';
       
-      final savedMonth = prefs.getString('pdf_chat_month') ?? '';
-      int chatCount = prefs.getInt('pdf_chat_count') ?? 0;
+      final savedDay = prefs.getString('pdf_chat_day') ?? '';
+      int chatCount = prefs.getInt('pdf_chat_daily_count') ?? 0;
       
-      if (savedMonth != currentMonth) {
-        await prefs.setString('pdf_chat_month', currentMonth);
+      if (savedDay != currentDay) {
+        await prefs.setString('pdf_chat_day', currentDay);
         chatCount = 0;
-        await prefs.setInt('pdf_chat_count', 0);
+        await prefs.setInt('pdf_chat_daily_count', 0);
       }
       
-      if (chatCount >= 2) {
+      if (chatCount >= 10) {
         setState(() {
           _messages.add({'role': 'user', 'text': text});
           _messages.add({
             'role': 'ai', 
-            'text': 'You have reached the free tier limit of 2 chats per month. Please upgrade to Pro for unlimited access.'
+            'text': 'You have reached the free tier limit of 10 questions per day. Please upgrade to Pro for unlimited access or try again tomorrow.'
           });
         });
         _messageController.clear();
@@ -99,7 +99,7 @@ class _PdfChatPageState extends State<PdfChatPage> {
       }
       
       // Increment counter for allowed chat
-      await prefs.setInt('pdf_chat_count', chatCount + 1);
+      await prefs.setInt('pdf_chat_daily_count', chatCount + 1);
     }
     
     if (!isInitialSummary) {
